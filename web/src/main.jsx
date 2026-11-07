@@ -22,7 +22,7 @@ function App(){
     let closed=false, timer;
     function connect(){
       if(closed)return;
-      if(location.protocol==='file:' || (location.protocol==='capacitor:'))return;
+      if(location.protocol==='file:' || location.protocol==='jasvith:' || location.protocol==='capacitor:')return;
       const scheme=location.protocol==='https:'?'wss':'ws';
       const ws=new WebSocket(`${scheme}://${location.host}/ws`);socket.current=ws;
       ws.onopen=()=>{setConnection('online');ws.send(JSON.stringify({type:'ping',clientTime:Date.now()}));};
