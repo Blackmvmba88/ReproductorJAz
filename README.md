@@ -4,7 +4,7 @@ Reproductor de audio multiformato con **osciloscopio**, **vúmetros estéreo** y
 
 ## Estado
 
-**MVP v0.1:** interfaz web local. Soporta archivos WAV, MP3, FLAC, OGG, AAC y otros formatos **cuando el navegador puede decodificarlos**. La compatibilidad depende del sistema y navegador. No se incluye FFmpeg ni conversión de formatos en esta versión.
+**MVP v0.2:** interfaz web local. Soporta archivos WAV, MP3, FLAC, OGG, AAC y otros formatos **cuando el navegador puede decodificarlos**. La compatibilidad depende del sistema y navegador. No se incluye FFmpeg ni conversión de formatos en esta versión.
 
 ## Ejecutar
 
@@ -24,6 +24,11 @@ Visita `http://localhost:8000`. Selecciona **Abrir audio** y elige un archivo lo
 - Espectro FFT del audio reproducido.
 - Modo de prueba con generador sinusoidal a 440 Hz.
 - Diseño adaptable y visualización con Canvas 2D.
+- Cuatro temas (Violet, Ocean, Ember, Classic), glassmorfismo opcional y preferencias visuales guardadas localmente.
+- Selección múltiple de archivos, cola navegable, anterior/siguiente, reproducción consecutiva, repetición y aleatorio.
+- Estimación de latencia mediante `AudioContext.baseLatency` y `outputLatency` cuando el navegador las expone; no mide latencia extremo a extremo ni garantiza audio sin interrupciones.
+
+La cola conserva referencias a los archivos seleccionados solo durante la sesión. Al añadir nuevos archivos se incorporan al final y se selecciona el primero del nuevo lote. No existe sincronización remota.
 
 ### Arquitectura
 
@@ -63,6 +68,10 @@ Las lecturas representan ventanas de análisis, no la totalidad del archivo.
 - Biblioteca, listas de reproducción, etiquetas y MIDI con sintetizador.
 - DSP: ecualizador paramétrico, limitador y filtros.
 - Pruebas de audio y latencia automatizadas.
+- Transición progresiva a React con separación entre motor de audio y componentes visuales.
+- API WebSocket para sesiones sincronizadas, sin transportar PCM por defecto.
+- Autenticación mediante proveedor OIDC (Google y otros); implementar backend y validación de tokens antes de habilitarla.
+- Motor de precarga, pruebas de *underruns*, gapless real y medición de latencia extremo a extremo.
 
 ## Seguridad y privacidad
 
