@@ -1,7 +1,9 @@
 'use strict';
 const el = id => document.getElementById(id);
 const audio = el('audio');
-let context, source, oscillator, oscGain, splitter, analysers, waveform, spectrumData, url, mediaTap, toneTap;
+const engine=window.JazAudioEngine.createAudioEngine(audio);
+let context,analysers,waveform,spectrumData,url;
+function syncAudioState(){const state=engine.snapshot();context=state.context;analysers=state.analysers;waveform=state.waveform;spectrumData=state.spectrumData;}
 let playingSine = false;
 const playlist=[];
 let currentIndex=-1;
@@ -21,39 +23,18 @@ const zero = '\u2212\u221e';
 function db(v){return v>0 ? (20*Math.log10(v)).toFixed(1) : zero;}
 function clock(v){if(!Number.isFinite(v))return '0:00';const s=Math.floor(v);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
 function ensureAudio(){
-  if(context)return;
-  const API=window.AudioContext||window.webkitAudioContext;
-  if(!API)throw new Error('Web Audio API no disponible');
-  context=new API();
-  const latencyMs=Math.round(1000*((context.baseLatency||0)+(context.outputLatency||0)));
-  el('latency').textContent=latencyMs?`Latencia estimada del dispositivo: ${latencyMs} ms`:'Latencia: navegador sin estimación';
-  source=context.createMediaElementSource(audio);
-  splitter=context.createChannelSplitter(2);
-  analysers=[context.createAnalyser(),context.createAnalyser()];
-  analysers.forEach(a=>{a.fftSize=2048;a.smoothingTimeConstant=0.75;});
-  source.connect(context.destination);
-  mediaTap=context.createGain();toneTap=context.createGain();
-  mediaTap.gain.value=1;toneTap.gain.value=0;
-  source.connect(mediaTap);mediaTap.connect(splitter);
-  toneTap.connect(splitter);
-  splitter.connect(analysers[0],0);
-  splitter.connect(analysers[1],1);
-  waveform=analysers.map(a=>new Float32Array(a.fftSize));
-  spectrumData=new Uint8Array(analysers[0].frequencyBinCount);
+ engine.ensure();syncAudioState();
+ const ms=engine.latencyMs();
+ el('latency').textContent=ms?'Latencia estimada del dispositivo: '+ms+' ms':'Latencia: navegador sin estimación';
 }
-async function resume(){ensureAudio();if(context.state!=='running')await context.resume();}
+async function resume(){await engine.resume();syncAudioState();}
 function status(s){el('state').textContent=s;}
-function stopSine(){if(oscillator){oscillator.stop();oscillator.disconnect();oscillator=null;}playingSine=false;if(toneTap)toneTap.gain.value=0;if(mediaTap)mediaTap.gain.value=1;el('sine').textContent='∿ Prueba 440 Hz';syncVisualizer();}
+function stopSine(){engine.stopTone();playingSine=false;el('sine').textContent='∿ Prueba 440 Hz';syncVisualizer();}
 async function toggleSine(){
  try{
-  await resume();
   if(playingSine){stopSine();status(audio.paused?'LISTO':'REPRODUCIENDO');return;}
-  audio.pause();mediaTap.gain.value=0;toneTap.gain.value=1;oscillator=context.createOscillator();oscGain=context.createGain();
-  oscillator.type='sine';oscillator.frequency.value=440;oscGain.gain.value=.2*Number(el('volume').value)/100;
-  oscillator.connect(oscGain);oscGain.connect(context.destination);
-  // Route the oscillator into the analyzers independently without duplicating audio output.
-  oscGain.connect(toneTap);
-  oscillator.start();playingSine=true;syncVisualizer();el('sine').textContent='■ Detener prueba';el('play').textContent='▶ Reproducir';status('SENOIDE 440 HZ');
+  audio.pause();await engine.startTone(Number(el('volume').value)/100);syncAudioState();
+  playingSine=true;syncVisualizer();el('sine').textContent='■ Detener prueba';el('play').textContent='▶ Reproducir';status('SENOIDE 440 HZ');
  }catch(err){status('ERROR');alert(err.message);}
 }
 el('sine').addEventListener('click',toggleSine);
@@ -99,7 +80,7 @@ el('play').addEventListener('click',async()=>{
 });
 el('volume').addEventListener('input',()=>{
  const v=Number(el('volume').value)/100;audio.volume=v;
- if(oscGain)oscGain.gain.value=.2*v;el('volvalue').textContent=Math.round(v*100)+'%';
+ engine.setToneVolume(v);el('volvalue').textContent=Math.round(v*100)+'%';
 });
 audio.volume=.75;
 audio.addEventListener('play',()=>{el('play').textContent='Ⅱ Pausar';status('REPRODUCIENDO');});
@@ -160,7 +141,7 @@ function syncVisualizer(){
 }
 audio.addEventListener('play',syncVisualizer);
 audio.addEventListener('pause',syncVisualizer);
-window.addEventListener('pagehide',()=>{visualization.stop();if(url)URL.revokeObjectURL(url);if(context)context.close();});
+window.addEventListener('pagehide',()=>{visualization.stop();if(url)URL.revokeObjectURL(url);void engine.close();});
 
 
 /* JAz Sense shares the same animation cycle and FFT buffer. */
