@@ -5,20 +5,16 @@ let context, source, oscillator, oscGain, splitter, analysers, waveform, spectru
 let playingSine = false;
 const playlist=[];
 let currentIndex=-1;
-const themeNames=['violet','ocean','ember','classic'];
-function setTheme(name,glass){
-  const safe=themeNames.includes(name)?name:'violet';
-  document.documentElement.dataset.theme=safe;
-  document.documentElement.dataset.glass=glass?'on':'off';
-  try{localStorage.setItem('jaz-appearance',JSON.stringify({theme:safe,glass:!!glass}));}catch{}
+const preferenceStore=window.JazPreferences;
+const savedAppearance=preferenceStore.load(localStorage);
+function applyAppearance(next){
+ const value=preferenceStore.save(localStorage,next);
+ document.documentElement.dataset.theme=value.theme;
+ document.documentElement.dataset.glass=value.glass?'on':'off';
+ el('theme').value=value.theme;el('glass').checked=value.glass;
 }
-try{
- const saved=JSON.parse(localStorage.getItem('jaz-appearance')||'{}');
- el('theme').value=themeNames.includes(saved.theme)?saved.theme:'violet';
- el('glass').checked=saved.glass!==false;
-}catch{}
-setTheme(el('theme').value,el('glass').checked);
-for(const id of ['theme','glass'])el(id).addEventListener('change',()=>setTheme(el('theme').value,el('glass').checked));
+applyAppearance(savedAppearance);
+for(const id of ['theme','glass'])el(id).addEventListener('change',()=>applyAppearance({theme:el('theme').value,glass:el('glass').checked}));
 const scope = el('scope'), spectrum = el('spectrum');
 const scopeCtx = scope.getContext('2d'), spectrumCtx = spectrum.getContext('2d');
 const zero = '\u2212\u221e';
@@ -47,7 +43,7 @@ function ensureAudio(){
 }
 async function resume(){ensureAudio();if(context.state!=='running')await context.resume();}
 function status(s){el('state').textContent=s;}
-function stopSine(){if(oscillator){oscillator.stop();oscillator.disconnect();oscillator=null;}playingSine=false;if(toneTap)toneTap.gain.value=0;if(mediaTap)mediaTap.gain.value=1;el('sine').textContent='∿ Prueba 440 Hz';}
+function stopSine(){if(oscillator){oscillator.stop();oscillator.disconnect();oscillator=null;}playingSine=false;if(toneTap)toneTap.gain.value=0;if(mediaTap)mediaTap.gain.value=1;el('sine').textContent='∿ Prueba 440 Hz';syncVisualizer();}
 async function toggleSine(){
  try{
   await resume();
@@ -57,7 +53,7 @@ async function toggleSine(){
   oscillator.connect(oscGain);oscGain.connect(context.destination);
   // Route the oscillator into the analyzers independently without duplicating audio output.
   oscGain.connect(toneTap);
-  oscillator.start();playingSine=true;el('sine').textContent='■ Detener prueba';el('play').textContent='▶ Reproducir';status('SENOIDE 440 HZ');
+  oscillator.start();playingSine=true;syncVisualizer();el('sine').textContent='■ Detener prueba';el('play').textContent='▶ Reproducir';status('SENOIDE 440 HZ');
  }catch(err){status('ERROR');alert(err.message);}
 }
 el('sine').addEventListener('click',toggleSine);
@@ -85,10 +81,7 @@ async function loadTrack(index,autoplay=false){
  if(shouldPlay){try{await resume();await audio.play();}catch(err){status('ERROR DE AUDIO');}}
 }
 function nextIndex(direction){
- if(!playlist.length)return -1;
- if(el('shuffle').checked&&playlist.length>1){let index=currentIndex;while(index===currentIndex)index=Math.floor(Math.random()*playlist.length);return index;}
- const index=currentIndex+direction;
- return index>=0&&index<playlist.length?index:(el('repeat').checked?(index+playlist.length)%playlist.length:-1);
+ return window.JazPlaylist.nextIndex(currentIndex,playlist.length,direction,el('shuffle').checked,el('repeat').checked);
 }
 el('previous').addEventListener('click',()=>loadTrack(nextIndex(-1),true));
 el('next').addEventListener('click',()=>loadTrack(nextIndex(1),true));
@@ -133,19 +126,20 @@ function meter(channel,measure){
  el('meter'+channel).style.width=Math.max(0,Math.min(100,(20*Math.log10(Math.max(measure.peak,.001))+60)/60*100))+'%';
 }
 function render(){
- requestAnimationFrame(render);
  const w=scope.width,h=scope.height;
  grid(scopeCtx,w,h);
  grid(spectrumCtx,spectrum.width,spectrum.height);
  if(!analysers)return;
  const active=!audio.paused||playingSine;
+ const measures=[];
  for(let i=0;i<2;i++){
   analysers[i].getFloatTimeDomainData(waveform[i]);
   const measure=active?measurements(waveform[i]):{peak:0,rms:0};
+  measures.push(measure);
   meter(i?'R':'L',measure);
   if(active)drawWave(scopeCtx,waveform[i],w,h,i?'#39d8c1':'#aa79ff',h*(i?0.75:0.25),h*.22);
  }
- if(!active)return;
+ if(!active){updateSense(performance.now(),{peak:0,rms:0},{peak:0,rms:0});return;}
  analysers[0].getByteFrequencyData(spectrumData);
  const ctx=spectrumCtx,W=spectrum.width,H=spectrum.height;
  const minF=20,maxF=Math.min(20000,context.sampleRate/2);
@@ -157,34 +151,19 @@ function render(){
   const x=i*W/bars;ctx.fillStyle='hsl('+(265-i*1.75)+' 85% 65%)';
   ctx.fillRect(x,H-barH,Math.max(1,W/bars-2),barH);
  }
+ updateSense(performance.now(),measures[0],measures[1]);
 }
-render();
-window.addEventListener('pagehide',()=>{if(url)URL.revokeObjectURL(url);});
+const visualization=window.JazVisualizer.createScheduler({request:callback=>requestAnimationFrame(callback),cancel:id=>cancelAnimationFrame(id),draw:render});
+function syncVisualizer(){
+ if(!audio.paused||playingSine)visualization.start();
+ else {visualization.stop();render();}
+}
+audio.addEventListener('play',syncVisualizer);
+audio.addEventListener('pause',syncVisualizer);
+window.addEventListener('pagehide',()=>{visualization.stop();if(url)URL.revokeObjectURL(url);if(context)context.close();});
 
-/* Interface preferences and JAz Sense: local, explainable signal heuristics. */
-const themes = ['amethyst','ocean','ember','emerald'];
-const modes = ['studio','spotify','winamp','discord'];
-function preference(key, fallback){try{return localStorage.getItem('jaz:'+key)||fallback;}catch{return fallback;}}
-function persist(key, value){try{localStorage.setItem('jaz:'+key,value);}catch{/* private browsing */}}
-function setTheme(value){const chosen=themes.includes(value)?value:'amethyst';document.documentElement.dataset.theme=chosen;el('theme').value=chosen;persist('theme',chosen);}
-function setMode(value){const chosen=modes.includes(value)?value:'studio';document.documentElement.dataset.mode=chosen;el('layoutMode').value=chosen;persist('mode',chosen);}
-function setGlass(on){document.documentElement.dataset.glass=on?'on':'off';el('glass').checked=on;persist('glass',on?'on':'off');}
-setTheme(preference('theme','amethyst'));
-setMode(preference('mode','studio'));
-setGlass(preference('glass','on')!=='off');
-el('theme').addEventListener('change',e=>setTheme(e.target.value));
-el('layoutMode').addEventListener('change',e=>setMode(e.target.value));
-el('glass').addEventListener('change',e=>setGlass(e.target.checked));
-el('loop').addEventListener('click',()=>{
- audio.loop=!audio.loop;el('loop').setAttribute('aria-pressed',String(audio.loop));
- el('loop').textContent=audio.loop?'↻ Repetir: sí':'↻ Repetir: no';
-});
-let shuffle=false;
-el('shuffle').addEventListener('click',()=>{
- shuffle=!shuffle;el('shuffle').setAttribute('aria-pressed',String(shuffle));
- el('shuffle').textContent=shuffle?'⇄ Aleatorio: sí':'⇄ Aleatorio: no';
- el('shuffle').title='Se aplicará cuando exista una lista de reproducción';
-});
+
+/* JAz Sense shares the same animation cycle and FFT buffer. */
 let lastInsight=0;
 function updateSense(now,left,right){
  if(now-lastInsight<450)return;
@@ -206,12 +185,3 @@ function updateSense(now,left,right){
  el('balance').textContent=dominant;
  el('insight').textContent=peak>=.98?'Picos cercanos a 0 dBFS: revisa posible clipping.':rms<.025?'Nivel instantáneo bajo.':crest>15?'Transitorios marcados: escucha la dinámica.':'Señal activa sin alertas inmediatas.';
 }
-function senseTick(now){
- requestAnimationFrame(senseTick);
- if(!analysers)return;
- if(!audio.paused||playingSine){
-  analysers[0].getByteFrequencyData(spectrumData);
-  updateSense(now,measurements(waveform[0]),measurements(waveform[1]));
- }else updateSense(now,{peak:0,rms:0},{peak:0,rms:0});
-}
-requestAnimationFrame(senseTick);
