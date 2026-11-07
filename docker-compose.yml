@@ -1,0 +1,15 @@
+services:
+  web:
+    build: .
+    ports:
+      - "8080:80"
+    depends_on:
+      - realtime
+    restart: unless-stopped
+  realtime:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    expose:
+      - "8787"
+    restart: unless-stopped
