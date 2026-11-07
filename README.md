@@ -138,3 +138,32 @@ La API escucha únicamente en `127.0.0.1`. No habilites exposición pública sin
 2. Implementar playlist y doble deck con precarga de pista siguiente y crossfade opcional, medir discontinuidades reales.
 3. Autenticación OIDC (Google y otros) con PKCE, sesiones seguras, protección de WebSocket y pruebas de autorización.
 4. Rooms para sincronización multiusuario sin enviar audio por el canal de control.
+
+
+## 📱 Abrir ReproductorJAz en tu celular con QR (LAN)
+
+Esta función usa la interfaz **React experimental**. La Mac y el teléfono deben estar en la **misma red Wi-Fi** y la computadora debe permanecer encendida con el servidor iniciado.
+
+Desde la raíz del proyecto, en la Mac:
+
+```bash
+npm install --prefix server
+npm install --prefix web
+npm start --prefix server
+```
+
+Abre otra terminal y ejecuta:
+
+```bash
+npm run mobile --prefix web
+```
+
+Verás una dirección como `http://192.168.1.25:5173/` y un **código QR en la terminal**. Escanéalo con la cámara del celular para abrir el reproductor. La IP es un ejemplo; el comando detecta una IP privada real de la computadora.
+
+- Si hay varias interfaces de red, puedes elegir una de las IP locales detectadas con `JAZ_HOST_IP=192.168.1.25 npm run mobile --prefix web`.
+- Si el puerto está ocupado, usa `JAZ_PORT=5174 npm run mobile --prefix web`.
+- El QR apunta a la interfaz web, **no empareja dispositivos** ni transmite archivos de música. En el celular debes seleccionar audio almacenado en ese dispositivo.
+- El WebSocket funciona mediante el proxy de Vite hacia el servicio local en el puerto 8787; inicia también `server` si deseas telemetría.
+- Si no abre, revisa el firewall de macOS, que ambos dispositivos estén en la misma Wi-Fi y que la red no tenga aislamiento de clientes.
+- **Seguridad:** úsalo exclusivamente en una red local de confianza. El prototipo no tiene autenticación ni TLS; no abras el puerto en el router ni lo publiques en Internet.
+- Para detener la sesión, presiona Ctrl+C.
