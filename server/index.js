@@ -31,4 +31,5 @@ wss.on('connection', socket => {
     }
   });
 });
-server.listen(port, '127.0.0.1', () => console.log(`ReproductorJAz API http://127.0.0.1:${port}`));
+const host = process.env.HOST || '127.0.0.1';
+server.listen(port, host, () => console.log(`ReproductorJAz API http://${host}:${port}`));
