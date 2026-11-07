@@ -1,1 +1,36 @@
 :root{font-family:Inter,system-ui,sans-serif;color:#f3f4ff;background:#080b12;--accent:#b48aff;--ambient:#49326d;--panel:#16182bb0;--blur:22px}*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 10% 0,var(--ambient),transparent 48%),#080b12}body,.panel{transition:background .2s}:root[data-theme=ocean]{--accent:#56b9ff;--ambient:#114c7a}:root[data-theme=ember]{--accent:#ff9a6a;--ambient:#7a292b}:root[data-theme=emerald]{--accent:#59e0a3;--ambient:#155c49}:root[data-glass=off]{--panel:#171c2b;--blur:0px}.shell{max-width:1120px;padding:32px 18px;margin:auto}header small{letter-spacing:2px;color:#b8b3ce}h1{font-size:clamp(2.3rem,6vw,4.6rem);letter-spacing:-.06em;margin:8px 0}h1 span{color:var(--accent)}header p{color:#b8b3ce}.settings,.panel{border:1px solid #ffffff29;border-radius:22px;background:var(--panel);backdrop-filter:blur(var(--blur));-webkit-backdrop-filter:blur(var(--blur));box-shadow:0 20px 45px #0004;padding:22px;margin:18px 0}.settings,.actions,.line,.stats{display:flex;align-items:center;gap:16px;flex-wrap:wrap}.settings label{display:flex;align-items:center;gap:8px}.line{justify-content:space-between;margin:18px 0}.line input{flex:1;min-width:100px}.line span{color:#c8c7d5}.actions{margin:24px 0}button,.button,select{border:1px solid #ffffff44;border-radius:10px;padding:12px 16px;background:#242840;color:#fff;cursor:pointer;font:inherit}button:hover,.button:hover{border-color:var(--accent)}button:disabled{opacity:.45;cursor:not-allowed}button[aria-pressed=true]{color:var(--accent)}input[type=range],input[type=checkbox]{accent-color:var(--accent)}h2{margin:0 0 18px}.meter{height:19px;background:#22293b;border-radius:9px;overflow:hidden}.meter>div{height:100%;background:linear-gradient(90deg,var(--accent),#43d8b7,#e9d15e,#f75e70);transition:width .2s}.stats{margin-top:18px}.stats article{flex:1;min-width:125px;padding:15px;border-radius:12px;background:#060a164d;border:1px solid #ffffff1a}.stats small{display:block;color:#c0c5d4;margin-bottom:8px}.stats strong{font-size:1.3rem}.hint,footer{color:#a9b0c1;font-size:12px;line-height:1.7}footer{text-align:center;padding:20px}:root[data-mode=winamp] .panel{border-radius:6px;border-width:2px}:root[data-mode=winamp] h1{font-family:monospace}:root[data-mode=spotify] .panel:first-of-type{border-radius:32px;background:linear-gradient(150deg,var(--ambient),var(--panel))}:root[data-mode=discord] .panel{background:color-mix(in srgb,var(--panel) 85%,#5865f2 15%)}@media(prefers-reduced-motion:reduce){body,.panel,.meter>div{transition:none}}
+
+/* Jasvith Neon Glass — original palette inspired by luminous green glass */
+:root[data-theme=jasvith] {
+  --accent:#d6ff37;
+  --ambient:#264d05;
+  --panel:rgba(26,52,18,.45);
+  --blur:28px;
+  color:#f1ffe2;
+}
+:root[data-theme=jasvith] body {
+  background:
+    radial-gradient(ellipse at 30% 5%,rgba(124,255,21,.22),transparent 42%),
+    radial-gradient(ellipse at 87% 70%,rgba(93,167,37,.13),transparent 48%),
+    linear-gradient(140deg,#061702,#0b160d 55%,#10151b);
+}
+.hero{display:flex;align-items:center;gap:24px}
+.brand-icon{width:104px;height:104px;flex:none;border-radius:26px;background:linear-gradient(145deg,#365a12,#061605);border:1px solid #caff615c;box-shadow:0 0 34px #b8ff3b33,inset 0 0 20px #a2ff2418}
+.brand-icon img{display:block;width:100%;height:100%}
+.jasvith-wordmark{font-style:italic;letter-spacing:-.08em;text-shadow:0 0 25px color-mix(in srgb,var(--accent) 50%,transparent)}
+.jasvith-wordmark span{font-size:.38em;vertical-align:top;letter-spacing:0;margin-left:.35em}
+:root[data-theme=jasvith] .settings,:root[data-theme=jasvith] .panel{
+  background:linear-gradient(135deg,rgba(95,152,37,.21),rgba(13,32,16,.72));
+  border:1px solid rgba(193,255,98,.32);
+  box-shadow:0 18px 58px #0008, inset 0 1px 0 #e5ff9c24,0 0 32px #a4ff1410;
+}
+:root[data-theme=jasvith] button,:root[data-theme=jasvith] .button,:root[data-theme=jasvith] select{
+  background:rgba(24,43,22,.8);border-color:#b3f65c66;color:#f0ffda;
+}
+:root[data-theme=jasvith] button:hover,:root[data-theme=jasvith] .button:hover{
+  box-shadow:0 0 22px #b6ff4766;
+}
+:root[data-theme=jasvith] .meter>div{background:linear-gradient(90deg,#3c8d24,#b4ff29,#f3ff85)}
+:root[data-theme=jasvith] .stats article{background:#081c0a8c;border-color:#b8ff3d2e}
+:root[data-glass=off][data-theme=jasvith] .settings,:root[data-glass=off][data-theme=jasvith] .panel{background:#142514}
+@media(max-width:640px){.hero{gap:14px}.brand-icon{width:68px;height:68px;border-radius:18px}.shell{padding:18px 12px}.jasvith-wordmark{font-size:clamp(2rem,10vw,3.4rem)}}
