@@ -3,6 +3,22 @@ const el = id => document.getElementById(id);
 const audio = el('audio');
 let context, source, oscillator, oscGain, splitter, analysers, waveform, spectrumData, url, mediaTap, toneTap;
 let playingSine = false;
+const playlist=[];
+let currentIndex=-1;
+const themeNames=['violet','ocean','ember','classic'];
+function setTheme(name,glass){
+  const safe=themeNames.includes(name)?name:'violet';
+  document.documentElement.dataset.theme=safe;
+  document.documentElement.dataset.glass=glass?'on':'off';
+  try{localStorage.setItem('jaz-appearance',JSON.stringify({theme:safe,glass:!!glass}));}catch{}
+}
+try{
+ const saved=JSON.parse(localStorage.getItem('jaz-appearance')||'{}');
+ el('theme').value=themeNames.includes(saved.theme)?saved.theme:'violet';
+ el('glass').checked=saved.glass!==false;
+}catch{}
+setTheme(el('theme').value,el('glass').checked);
+for(const id of ['theme','glass'])el(id).addEventListener('change',()=>setTheme(el('theme').value,el('glass').checked));
 const scope = el('scope'), spectrum = el('spectrum');
 const scopeCtx = scope.getContext('2d'), spectrumCtx = spectrum.getContext('2d');
 const zero = '\u2212\u221e';
@@ -13,6 +29,8 @@ function ensureAudio(){
   const API=window.AudioContext||window.webkitAudioContext;
   if(!API)throw new Error('Web Audio API no disponible');
   context=new API();
+  const latencyMs=Math.round(1000*((context.baseLatency||0)+(context.outputLatency||0)));
+  el('latency').textContent=latencyMs?`Latencia estimada del dispositivo: ${latencyMs} ms`:'Latencia: navegador sin estimación';
   source=context.createMediaElementSource(audio);
   splitter=context.createChannelSplitter(2);
   analysers=[context.createAnalyser(),context.createAnalyser()];
@@ -43,12 +61,41 @@ async function toggleSine(){
  }catch(err){status('ERROR');alert(err.message);}
 }
 el('sine').addEventListener('click',toggleSine);
-el('file').addEventListener('change',async event=>{
- const file=event.target.files?.[0];if(!file)return;
+function renderQueue(){
+ const list=el('queue');list.replaceChildren();
+ playlist.forEach((file,index)=>{
+  const item=document.createElement('li');
+  const button=document.createElement('button');button.type='button';button.className='queue-track';
+  button.textContent=file.name;button.title=file.name;
+  if(index===currentIndex){button.setAttribute('aria-current','true');item.classList.add('active');}
+  button.addEventListener('click',()=>loadTrack(index,true));item.append(button);list.append(item);
+ });
+ el('queuecount').textContent=`${playlist.length} PISTAS`;
+ el('previous').disabled=playlist.length<2;el('next').disabled=playlist.length<2;
+}
+async function loadTrack(index,autoplay=false){
+ if(index<0||index>=playlist.length)return;
+ const shouldPlay=autoplay;
  audio.pause();stopSine();
- if(url)URL.revokeObjectURL(url);url=URL.createObjectURL(file);
- audio.src=url;audio.load();el('track').textContent=file.name;el('play').disabled=false;el('seek').disabled=false;
- status('CARGADO');el('play').textContent='▶ Reproducir';
+ if(url)URL.revokeObjectURL(url);
+ currentIndex=index;url=URL.createObjectURL(playlist[index]);
+ audio.src=url;audio.load();el('track').textContent=playlist[index].name;
+ el('play').disabled=false;el('seek').disabled=false;
+ status('CARGADO');el('play').textContent='▶ Reproducir';renderQueue();
+ if(shouldPlay){try{await resume();await audio.play();}catch(err){status('ERROR DE AUDIO');}}
+}
+function nextIndex(direction){
+ if(!playlist.length)return -1;
+ if(el('shuffle').checked&&playlist.length>1){let index=currentIndex;while(index===currentIndex)index=Math.floor(Math.random()*playlist.length);return index;}
+ const index=currentIndex+direction;
+ return index>=0&&index<playlist.length?index:(el('repeat').checked?(index+playlist.length)%playlist.length:-1);
+}
+el('previous').addEventListener('click',()=>loadTrack(nextIndex(-1),true));
+el('next').addEventListener('click',()=>loadTrack(nextIndex(1),true));
+el('file').addEventListener('change',async event=>{
+ const files=Array.from(event.target.files||[]);if(!files.length)return;
+ const start=playlist.length;playlist.push(...files);await loadTrack(start,false);
+ event.target.value='';
 });
 el('play').addEventListener('click',async()=>{
  try{
@@ -64,7 +111,7 @@ el('volume').addEventListener('input',()=>{
 audio.volume=.75;
 audio.addEventListener('play',()=>{el('play').textContent='Ⅱ Pausar';status('REPRODUCIENDO');});
 audio.addEventListener('pause',()=>{el('play').textContent='▶ Reproducir';if(!playingSine)status('PAUSADO');});
-audio.addEventListener('ended',()=>status('FINALIZADO'));
+audio.addEventListener('ended',()=>{const next=nextIndex(1);if(next>=0)loadTrack(next,true);else status('FINALIZADO');});
 audio.addEventListener('error',()=>status('FORMATO NO SOPORTADO'));
 audio.addEventListener('loadedmetadata',()=>{el('duration').textContent=clock(audio.duration);});
 audio.addEventListener('timeupdate',()=>{el('elapsed').textContent=clock(audio.currentTime);el('seek').value=Number.isFinite(audio.duration)&&audio.duration>0?Math.round(1000*audio.currentTime/audio.duration):0;});
