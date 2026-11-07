@@ -7,19 +7,20 @@
 </head>
 <body>
 <main class="shell">
-<header><span class="eyebrow">BLACKMAMBA CORP · AUDIO LAB</span><h1>REPRODUCTOR<span>JAZ</span></h1><p>Music Player · Osciloscopio · FFT · Vúmetros</p></header>
+<header><span class="eyebrow">BLACKMAMBA CORP · AUDIO LAB</span><h1>REPRODUCTOR<span>JAZ</span></h1><p>Music Player · Osciloscopio · FFT · Vúmetros</p><div class="preferences"><label for="theme">Tema visual</label><select id="theme"><option value="violet">Mamba Violet</option><option value="ocean">Ocean Glass</option><option value="ember">Ember Red</option><option value="classic">Classic Dark</option></select><label class="switch"><input id="glass" type="checkbox" checked> Glassmorfismo</label></div></header>
 <section class="deck" aria-label="Reproductor">
   <div class="head"><strong id="track">Ningún archivo seleccionado</strong><span id="state">LISTO</span></div>
-  <div class="controls"><label class="open">＋ Abrir audio<input id="file" type="file" accept="audio/*,.flac,.wav,.mp3,.ogg,.opus,.m4a,.aiff" hidden></label><button id="play" disabled>▶ Reproducir</button><button id="sine">∿ Prueba 440 Hz</button></div>
+  <div class="controls"><label class="open">＋ Abrir audio<input id="file" type="file" multiple accept="audio/*,.flac,.wav,.mp3,.ogg,.opus,.m4a,.aiff" hidden></label><button id="previous" disabled aria-label="Pista anterior">⏮ Anterior</button><button id="play" disabled>▶ Reproducir</button><button id="next" disabled aria-label="Siguiente pista">Siguiente ⏭</button><button id="sine">∿ Prueba 440 Hz</button></div>
   <div class="transport"><span id="elapsed">0:00</span><input id="seek" type="range" min="0" max="1000" value="0" disabled aria-label="Posición"><span id="duration">0:00</span></div>
   <div class="volume"><label for="volume">Volumen</label><input id="volume" type="range" min="0" max="100" value="75"><span id="volvalue">75%</span></div>
 </section>
+<section class="instrument queue-panel"><div class="sectiontop"><h2>Cola de reproducción</h2><span id="queuecount">0 PISTAS</span></div><ol id="queue" aria-label="Lista de pistas"><li class="queue-empty">Abre varios archivos para crear tu sesión.</li></ol><div class="queue-options"><label><input type="checkbox" id="repeat"> Repetir lista</label><label><input type="checkbox" id="shuffle"> Aleatorio</label><span id="latency" aria-live="polite">Latencia: sin medir</span></div></section>
 <section class="instrument"><div class="sectiontop"><h2>Osciloscopio estéreo</h2><span>PCM · TIME DOMAIN</span></div><canvas id="scope" width="1200" height="300" aria-label="Osciloscopio estéreo"></canvas><div class="legend"><span>● Izquierdo</span><span>● Derecho</span></div></section>
 <div class="bottom">
 <section class="instrument"><div class="sectiontop"><h2>Espectro FFT</h2><span>FREQUENCY DOMAIN</span></div><canvas id="spectrum" width="900" height="330" aria-label="Analizador de frecuencias"></canvas><div class="frequency"><span>20 Hz</span><span>200 Hz</span><span>2 kHz</span><span>20 kHz</span></div></section>
 <section class="instrument"><div class="sectiontop"><h2>Vúmetro digital</h2><span>PEAK / RMS dBFS</span></div><div class="meter"><div class="meterhead"><b>L</b><span id="dbL">−∞ dBFS</span></div><div class="track"><div id="meterL" class="fill"></div></div><small id="rmsL">RMS −∞ dBFS</small></div><div class="meter"><div class="meterhead"><b>R</b><span id="dbR">−∞ dBFS</span></div><div class="track"><div id="meterR" class="fill"></div></div><small id="rmsR">RMS −∞ dBFS</small></div><div class="scale"><span>−60</span><span>−40</span><span>−20</span><span>−10</span><span>0 dBFS</span></div><p class="note">Peak y RMS por ventana de muestras; no es un medidor VU calibrado.</p></section>
 </div>
-<footer>ReproductorJAz v0.1 · BlackMamba Audio Engine · Procesamiento local</footer>
-</main><audio id="audio" preload="metadata"></audio><script src="./app.js"></script>
+<footer>ReproductorJAz v0.2 · BlackMamba Audio Engine · Procesamiento local</footer>
+</main><audio id="audio" preload="metadata"></audio><script src="./app.js"></script><script src="./media-controls.js"></script>
 </body>
 </html>
