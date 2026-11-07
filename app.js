@@ -1,7 +1,7 @@
 'use strict';
 const el = id => document.getElementById(id);
 const audio = el('audio');
-let context, source, oscillator, oscGain, splitter, analysers, waveform, spectrumData, url;
+let context, source, oscillator, oscGain, splitter, analysers, waveform, spectrumData, url, mediaTap, toneTap;
 let playingSine = false;
 const scope = el('scope'), spectrum = el('spectrum');
 const scopeCtx = scope.getContext('2d'), spectrumCtx = spectrum.getContext('2d');
@@ -18,7 +18,10 @@ function ensureAudio(){
   analysers=[context.createAnalyser(),context.createAnalyser()];
   analysers.forEach(a=>{a.fftSize=2048;a.smoothingTimeConstant=0.75;});
   source.connect(context.destination);
-  source.connect(splitter);
+  mediaTap=context.createGain();toneTap=context.createGain();
+  mediaTap.gain.value=1;toneTap.gain.value=0;
+  source.connect(mediaTap);mediaTap.connect(splitter);
+  toneTap.connect(splitter);
   splitter.connect(analysers[0],0);
   splitter.connect(analysers[1],1);
   waveform=analysers.map(a=>new Float32Array(a.fftSize));
@@ -26,16 +29,16 @@ function ensureAudio(){
 }
 async function resume(){ensureAudio();if(context.state!=='running')await context.resume();}
 function status(s){el('state').textContent=s;}
-function stopSine(){if(oscillator){oscillator.stop();oscillator.disconnect();oscillator=null;}playingSine=false;el('sine').textContent='∿ Prueba 440 Hz';}
+function stopSine(){if(oscillator){oscillator.stop();oscillator.disconnect();oscillator=null;}playingSine=false;if(toneTap)toneTap.gain.value=0;if(mediaTap)mediaTap.gain.value=1;el('sine').textContent='∿ Prueba 440 Hz';}
 async function toggleSine(){
  try{
   await resume();
   if(playingSine){stopSine();status(audio.paused?'LISTO':'REPRODUCIENDO');return;}
-  audio.pause();oscillator=context.createOscillator();oscGain=context.createGain();
+  audio.pause();mediaTap.gain.value=0;toneTap.gain.value=1;oscillator=context.createOscillator();oscGain=context.createGain();
   oscillator.type='sine';oscillator.frequency.value=440;oscGain.gain.value=.2*Number(el('volume').value)/100;
   oscillator.connect(oscGain);oscGain.connect(context.destination);
   // Route the oscillator into the analyzers independently without duplicating audio output.
-  oscGain.connect(splitter);
+  oscGain.connect(toneTap);
   oscillator.start();playingSine=true;el('sine').textContent='■ Detener prueba';el('play').textContent='▶ Reproducir';status('SENOIDE 440 HZ');
  }catch(err){status('ERROR');alert(err.message);}
 }
