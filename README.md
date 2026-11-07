@@ -72,3 +72,17 @@ No hay backend ni subida de audio. El navegador carga archivos mediante un selec
 
 ---
 BlackMamba Corp · ReproductorJAz · 2026
+
+
+## v0.2 · Personalización y JAz Sense
+
+- Cuatro temas: Amethyst, Ocean, Ember y Emerald.
+- Glassmorphism opcional, con desenfoque y transparencia; respeta movimiento reducido.
+- Perfiles visuales Studio, Spotify, Winamp y Discord (inspiración de interfaz, sin integración con sus servicios).
+- Preferencias guardadas localmente cuando el navegador lo permite.
+- Repetición de pista funcional. El botón aleatorio conserva su estado, pero requiere una playlist para elegir archivos y **todavía no modifica el orden**.
+- **JAz Sense**: reglas locales sobre peak, RMS, crest factor y distribución aproximada del espectro. Son sugerencias heurísticas, no IA generativa ni medición profesional.
+
+### Autenticación (pendiente)
+
+Google y otros proveedores requieren registro OAuth, origen/redirect HTTPS y un backend o proveedor de identidad para sesiones verificables. Esta versión local no presenta falsos accesos ni recopila credenciales. Próximo hito: arquitectura OAuth/OIDC con PKCE, sesiones seguras y gestión de cuentas.
