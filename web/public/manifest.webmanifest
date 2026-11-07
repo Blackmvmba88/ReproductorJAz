@@ -1,0 +1,17 @@
+{
+  "name": "Jasvith — BlackMamba Audio",
+  "short_name": "Jasvith",
+  "description": "Neon Glass music player",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#071409",
+  "theme_color": "#b4ff2f",
+  "icons": [
+    {
+      "src": "/jasvith-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
