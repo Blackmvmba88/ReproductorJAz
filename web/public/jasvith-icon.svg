@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+<title>Jasvith Neon app icon</title>
+<defs>
+ <radialGradient id="bg" cx=".3" cy=".18" r="1"><stop stop-color="#426d16"/><stop offset=".6" stop-color="#102b0b"/><stop offset="1" stop-color="#071409"/></radialGradient>
+ <linearGradient id="glass" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#baff46" stop-opacity=".35"/><stop offset="1" stop-color="#4f9e2c" stop-opacity=".04"/></linearGradient>
+ <linearGradient id="neon" x1="0" x2="1"><stop stop-color="#aaff1c"/><stop offset=".5" stop-color="#edff60"/><stop offset="1" stop-color="#b4ff2f"/></linearGradient>
+ <filter id="glow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="11"/></filter>
+</defs>
+<rect width="512" height="512" rx="110" fill="url(#bg)"/>
+<rect x="66" y="67" width="380" height="378" rx="56" fill="url(#glass)" stroke="#d3ff81" stroke-opacity=".5" stroke-width="3"/>
+<path d="M147 178v130q0 39 35 39t35-39V181m43 0 46 151 46-151m-92 101h90" stroke="url(#neon)" stroke-width="25" stroke-linecap="round" stroke-linejoin="round" fill="none" filter="url(#glow)" opacity=".85"/>
+<path d="M147 178v130q0 39 35 39t35-39V181m43 0 46 151 46-151m-92 101h90" stroke="url(#neon)" stroke-width="20" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+<path d="M99 393h314" stroke="#d8ff61" stroke-opacity=".28" stroke-width="2"/>
+</svg>
