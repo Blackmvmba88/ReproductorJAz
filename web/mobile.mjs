@@ -8,7 +8,16 @@ if (!Number.isInteger(port) || port < 1024 || port > 65535) {
   process.exit(1);
 }
 
-const addresses = Object.values(os.networkInterfaces())
+let interfaces = {};
+try {
+  interfaces = os.networkInterfaces();
+} catch (error) {
+  if (!process.env.JAZ_HOST_IP) {
+    console.error('No pude detectar la IP local. Indícala con JAZ_HOST_IP=192.168.x.x');
+    process.exit(1);
+  }
+}
+const addresses = Object.values(interfaces)
   .flat()
   .filter((item) => item && item.family === 'IPv4' && !item.internal)
   .map((item) => item.address);
@@ -16,12 +25,12 @@ const privateAddress = (ip) => ip.startsWith('192.168.') || ip.startsWith('10.')
   /^172\.(1[6-9]|2\d|3[01])\./.test(ip);
 const lanAddresses = [...new Set(addresses.filter(privateAddress))];
 
-if (!lanAddresses.length) {
+if (!lanAddresses.length && !process.env.JAZ_HOST_IP) {
   console.error('No encontré una dirección IPv4 privada. Conéctate a Wi-Fi y vuelve a intentar.');
   process.exit(1);
 }
 const selected = process.env.JAZ_HOST_IP || lanAddresses[0];
-if (!lanAddresses.includes(selected)) {
+if (!privateAddress(selected) || (lanAddresses.length && !lanAddresses.includes(selected))) {
   console.error('JAZ_HOST_IP no corresponde a una dirección LAN detectada:', selected);
   process.exit(1);
 }
