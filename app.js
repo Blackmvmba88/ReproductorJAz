@@ -113,3 +113,58 @@ function render(){
 }
 render();
 window.addEventListener('pagehide',()=>{if(url)URL.revokeObjectURL(url);});
+
+/* Interface preferences and JAz Sense: local, explainable signal heuristics. */
+const themes = ['amethyst','ocean','ember','emerald'];
+const modes = ['studio','spotify','winamp','discord'];
+function preference(key, fallback){try{return localStorage.getItem('jaz:'+key)||fallback;}catch{return fallback;}}
+function persist(key, value){try{localStorage.setItem('jaz:'+key,value);}catch{/* private browsing */}}
+function setTheme(value){const chosen=themes.includes(value)?value:'amethyst';document.documentElement.dataset.theme=chosen;el('theme').value=chosen;persist('theme',chosen);}
+function setMode(value){const chosen=modes.includes(value)?value:'studio';document.documentElement.dataset.mode=chosen;el('layoutMode').value=chosen;persist('mode',chosen);}
+function setGlass(on){document.documentElement.dataset.glass=on?'on':'off';el('glass').checked=on;persist('glass',on?'on':'off');}
+setTheme(preference('theme','amethyst'));
+setMode(preference('mode','studio'));
+setGlass(preference('glass','on')!=='off');
+el('theme').addEventListener('change',e=>setTheme(e.target.value));
+el('layoutMode').addEventListener('change',e=>setMode(e.target.value));
+el('glass').addEventListener('change',e=>setGlass(e.target.checked));
+el('loop').addEventListener('click',()=>{
+ audio.loop=!audio.loop;el('loop').setAttribute('aria-pressed',String(audio.loop));
+ el('loop').textContent=audio.loop?'↻ Repetir: sí':'↻ Repetir: no';
+});
+let shuffle=false;
+el('shuffle').addEventListener('click',()=>{
+ shuffle=!shuffle;el('shuffle').setAttribute('aria-pressed',String(shuffle));
+ el('shuffle').textContent=shuffle?'⇄ Aleatorio: sí':'⇄ Aleatorio: no';
+ el('shuffle').title='Se aplicará cuando exista una lista de reproducción';
+});
+let lastInsight=0;
+function updateSense(now,left,right){
+ if(now-lastInsight<450)return;
+ lastInsight=now;
+ if(!analysers||(!playingSine&&audio.paused)){
+  el('insight').textContent='En espera de reproducción';el('balance').textContent='—';el('dynamic').textContent='—';return;
+ }
+ const peak=Math.max(left.peak,right.peak),rms=Math.max(left.rms,right.rms);
+ const crest=rms>0?20*Math.log10(Math.max(peak,1e-9)/rms):0;
+ el('dynamic').textContent=Number.isFinite(crest)?crest.toFixed(1)+' dB crest':'—';
+ const bins=spectrumData.length,sampleRate=context.sampleRate,fftSize=analysers[0].fftSize;
+ let low=0,mid=0,high=0;
+ for(let i=1;i<bins;i++){
+  const hz=i*sampleRate/fftSize,energy=(spectrumData[i]/255)**2;
+  if(hz<250)low+=energy;else if(hz<4000)mid+=energy;else if(hz<12000)high+=energy;
+ }
+ const total=low+mid+high;
+ const dominant=total<.02?'Sin señal suficiente':low>mid*1.25&&low>high*2?'Graves dominantes':high>mid*.85&&high>low?'Agudos presentes':'Equilibrio medio';
+ el('balance').textContent=dominant;
+ el('insight').textContent=peak>=.98?'Picos cercanos a 0 dBFS: revisa posible clipping.':rms<.025?'Nivel instantáneo bajo.':crest>15?'Transitorios marcados: escucha la dinámica.':'Señal activa sin alertas inmediatas.';
+}
+function senseTick(now){
+ requestAnimationFrame(senseTick);
+ if(!analysers)return;
+ if(!audio.paused||playingSine){
+  analysers[0].getByteFrequencyData(spectrumData);
+  updateSense(now,measurements(waveform[0]),measurements(waveform[1]));
+ }else updateSense(now,{peak:0,rms:0},{peak:0,rms:0});
+}
+requestAnimationFrame(senseTick);
